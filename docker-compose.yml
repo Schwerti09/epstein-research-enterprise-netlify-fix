@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  # Frontend (Netlify dev)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "8888:8888"
+    environment:
+      - NEON_DATABASE_URL=${NEON_DATABASE_URL}
+      - DATABASE_URL=${DATABASE_URL}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - NEXT_PUBLIC_API_BASE=/api
+      - NODE_VERSION=20
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: npm run dev:netlify
+
+  # API Service
+  api-service:
+    build:
+      context: ./api-service
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - PORT=3001
+    volumes:
+      - ./api-service:/app
+      - /app/node_modules
+
+  # AI Worker
+  ai-worker:
+    build:
+      context: ./ai-worker
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - NEON_DATABASE_URL=${NEON_DATABASE_URL}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_EMBEDDING_MODEL=${OPENAI_EMBEDDING_MODEL}
+      - OPENAI_CHAT_MODEL=${OPENAI_CHAT_MODEL}
+      - PORT=8000
+    volumes:
+      - ./ai-worker:/app
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=admin

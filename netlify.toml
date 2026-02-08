@@ -1,0 +1,25 @@
+[build]
+  base = "frontend"
+  command = "npm run build"
+  publish = ".next"
+
+# Explicitly enable Next.js runtime on Netlify (prevents 404 due to missing static index.html)
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# Our serverless functions live inside the frontend folder
+[functions]
+  directory = "frontend/netlify/functions"
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
